@@ -1,7 +1,10 @@
+use std::fmt::Display;
+use std::fmt::{Formatter, Result};
+
 pub struct GapBuffer {
-    buffer: Vec<char>,
+    pub buffer: Vec<char>,
     cursor: usize,
-    gap_start: usize,
+    pub gap_start: usize,
     gap_end: usize,
 }
 
@@ -14,7 +17,9 @@ impl GapBuffer {
     }
 
     pub fn insert(&mut self, ch: char) {
-        self.check_gap();
+        // verursacht, dass der cursor zu weit
+        // vorspringt
+        //self.check_gap();
         self.buffer[self.cursor] = ch;
         self.gap_start += 1
     }
@@ -24,14 +29,22 @@ impl GapBuffer {
     }
     pub fn new() -> GapBuffer {
         GapBuffer {
-            buffer: Vec::with_capacity(10),
+            buffer: vec!['\0'; 10],
             gap_start: 0,
             gap_end: 9,
             cursor: 0,
         }
     }
 }
-
+impl Display for GapBuffer {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        let mut string = String::new();
+        for i in self.buffer.clone() {
+            string.push(i);
+        }
+        write!(f, "{}", string)
+    }
+}
 #[cfg(test)]
 mod tests {
     #[test]
