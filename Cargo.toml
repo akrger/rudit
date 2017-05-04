@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["André Krüger <zeldamer@t-online.de>"]
 
 [dependencies]
-termion = "1"
+ncurses = "5.85.0"
+pancurses = "0.8"
