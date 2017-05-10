@@ -4,10 +4,6 @@ use pancurses::*;
 use rudit::gapbuffer::GapBuffer;
 fn main() {
     let mut buffer = GapBuffer::new(10);
-    buffer.insert(0, 'b');
-    buffer.insert(1, 'a');
-    // buffer.insert(2, 'a');
-    // buffer.insert(3, 'b');
     let mut stdscr = initscr();
     stdscr.keypad(true);
     noecho();
@@ -17,37 +13,44 @@ fn main() {
     let mut cy = 0;
     loop {
         draw_buffer(buffer.buffer.clone(), &mut stdscr);
-        move_cursor(cx, cy, &mut stdscr);
+        draw_info(&mut stdscr, &buffer);
+        move_cursor(buffer.cursor as i32, cy, &mut stdscr);
         stdscr.refresh();
+
         match stdscr.getch() {
             Some(Input::Character(c)) => {
                 if c == '\n' {
                     cy += 1;
-                    cx = 0;
-                    buffer.insert(cx as usize, '\n');
+                    buffer.cursor = 0;
+                    buffer.insert('\n');
                     continue;
                 }
-                buffer.insert(cx as usize, c);
-                cx += 1;
+                buffer.insert(c);
             }
             Some(Input::KeyEnter) => {
                 cy += 1;
-                cx = 0;
-                buffer.insert(cx as usize, '\n');
+                buffer.cursor = 0;
+                buffer.insert('\n');
             }
             Some(Input::KeyRight) => {
-                cx += 1;
+                // if buffer.buffer[buffer.cursor + 1] != '\0' {
+                //    buffer.cursor += 1;
+                // }
+                buffer.cursor += 1;
             }
             Some(Input::KeyLeft) => {
-                if cx > 0 {
-                    cx -= 1;
+                if buffer.cursor > 0 {
+                    buffer.cursor -= 1;
                 }
+            }
+            Some(Input::KeyDC) => {
+                buffer.delete();
+                stdscr.clear();
             }
 
             _ => (),
         }
     }
-    endwin();
 }
 fn draw_buffer(buffer: Vec<char>, stdscr: &mut Window) {
     let mut x = 0;
@@ -57,14 +60,25 @@ fn draw_buffer(buffer: Vec<char>, stdscr: &mut Window) {
             y += 1;
             x = 0;
 
-        } else if c == '\0' {
+        } else if c == '\r' || c == '\0' {
 
         } else {
             stdscr.mvaddch(y, x, c);
             x += 1;
         }
     }
+
 }
 fn move_cursor(x: i32, y: i32, stdscr: &mut Window) {
     stdscr.mv(y, x);
+}
+fn draw_info(stdscr: &mut Window, buffer: &GapBuffer) {
+    stdscr.mvaddstr(10, 0, "cx");
+    stdscr.mvaddstr(10, 3, buffer.cursor.to_string().as_str());
+
+    stdscr.mvaddstr(10, 5, "gs");
+    stdscr.mvaddstr(10, 8, buffer.gap_start.to_string().as_str());
+
+    stdscr.mvaddstr(10, 10, "ge");
+    stdscr.mvaddstr(10, 13, buffer.gap_end.to_string().as_str());
 }
