@@ -17,8 +17,9 @@ impl GapBuffer {
             let count = self.gap_end - self.gap_start;
             let amt = self.gap_start - self.cursor;
 
+            let temp_buffer = self.buffer.clone();
             for i in self.cursor..self.gap_start {
-                self.buffer[i + count] = self.buffer[i];
+                self.buffer[i + count] = temp_buffer[i];
             }
             self.gap_start -= amt;
             self.gap_end -= amt;
@@ -30,8 +31,9 @@ impl GapBuffer {
             let count = self.gap_end - self.gap_start;
             let amt = self.cursor - self.gap_start;
 
+            let temp_buffer = self.buffer.clone();
             for i in self.gap_end..self.buffer.len() {
-                self.buffer[i - count] = self.buffer[i];
+                self.buffer[i - count] = temp_buffer[i];
             }
             self.gap_start += amt;
             self.gap_end += amt;
@@ -39,7 +41,6 @@ impl GapBuffer {
             for i in self.gap_start..self.gap_end {
                 self.buffer[i] = '\0';
             }
-
         }
     }
     fn check_capacity(&mut self) {
@@ -50,19 +51,13 @@ impl GapBuffer {
     fn extend_buffer(&mut self) {
         let len = self.buffer.clone().len();
         self.buffer.resize(len * 2, '\0');
-        // still buggy :(
-        // for i in self.gap_end..self.buffer.len() - len {
-        //     self.buffer[i + len] = self.buffer[i];
-        // }
-        // self.gap_end += len;
-
-        // for i in self.gap_start..self.gap_end {
-        //     self.buffer[i] = '\0';
-        // }
+        self.gap_start += len - self.cursor;
+        self.gap_end = self.buffer.len();
+        self.place_gap();
     }
     pub fn insert(&mut self, ch: char) {
-        self.check_capacity();
         self.place_gap();
+        self.check_capacity();
         self.buffer[self.cursor] = ch;
         self.cursor += 1;
         self.gap_start += 1;
