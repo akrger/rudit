@@ -3,22 +3,21 @@ use std::fmt::{Formatter, Result};
 
 pub struct GapBuffer {
     pub buffer: Vec<char>,
-    pub cursor: usize,
     pub gap_start: usize,
     pub gap_end: usize,
 }
 
 impl GapBuffer {
-    fn place_gap(&mut self) {
-        if self.cursor == self.gap_start {
+    fn place_gap(&mut self, index: usize) {
+        if index == self.gap_start {
             return;
         }
-        if self.cursor < self.gap_start {
+        if index < self.gap_start {
             let count = self.gap_end - self.gap_start;
-            let amt = self.gap_start - self.cursor;
+            let amt = self.gap_start - index;
 
             let temp_buffer = self.buffer.clone();
-            for i in self.cursor..self.gap_start {
+            for i in index..self.gap_start {
                 self.buffer[i + count] = temp_buffer[i];
             }
             self.gap_start -= amt;
@@ -29,7 +28,7 @@ impl GapBuffer {
             }
         } else {
             let count = self.gap_end - self.gap_start;
-            let amt = self.cursor - self.gap_start;
+            let amt = index - self.gap_start;
 
             let temp_buffer = self.buffer.clone();
             for i in self.gap_end..self.buffer.len() {
@@ -43,27 +42,26 @@ impl GapBuffer {
             }
         }
     }
-    fn check_capacity(&mut self) {
+    fn check_capacity(&mut self, index: usize) {
         if self.gap_end == self.gap_start {
-            self.extend_buffer();
+            self.extend_buffer(index);
         }
     }
-    fn extend_buffer(&mut self) {
+    fn extend_buffer(&mut self, index: usize) {
         let len = self.buffer.clone().len();
         self.buffer.resize(len * 2, '\0');
-        self.gap_start += len - self.cursor;
+        self.gap_start += len - index;
         self.gap_end = self.buffer.len();
-        self.place_gap();
+        self.place_gap(index);
     }
-    pub fn insert(&mut self, ch: char) {
-        self.place_gap();
-        self.check_capacity();
-        self.buffer[self.cursor] = ch;
-        self.cursor += 1;
+    pub fn insert(&mut self, index: usize, ch: char) {
+        self.place_gap(index);
+        self.check_capacity(index);
+        self.buffer[index] = ch;
         self.gap_start += 1;
     }
-    pub fn delete(&mut self) {
-        self.place_gap();
+    pub fn delete(&mut self, index: usize) {
+        self.place_gap(index);
         self.buffer[self.gap_end] = '\0';
         self.gap_end += 1;
     }
@@ -72,7 +70,6 @@ impl GapBuffer {
             buffer: vec!['\0'; size],
             gap_start: 0,
             gap_end: size,
-            cursor: 0,
         }
     }
     pub fn len(&self) -> usize {
@@ -100,13 +97,12 @@ mod tests {
     fn test_gap_check() {
         use gapbuffer::GapBuffer;
         let mut buffer = GapBuffer::new(5);
-        buffer.insert('a');
-        buffer.insert('c');
+        buffer.insert(0, 'a');
+        buffer.insert(1, 'c');
 
         assert_eq!('a', buffer.buffer[0]);
         assert_eq!('c', buffer.buffer[1]);
-        buffer.cursor = 0;
-        buffer.insert('d');
+        buffer.insert(0, 'd');
         assert_eq!('d', buffer.buffer[0]);
         assert_eq!('a', buffer.buffer[3]);
         assert_eq!('c', buffer.buffer[4]);
