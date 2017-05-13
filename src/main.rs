@@ -1,21 +1,24 @@
 extern crate rudit;
 extern crate pancurses;
+
 use pancurses::*;
 use rudit::gapbuffer::GapBuffer;
+
 fn main() {
-    let mut buffer = GapBuffer::new(10);
+    let mut buffer = GapBuffer::new(4);
+
     let mut stdscr = initscr();
+
     stdscr.keypad(true);
     noecho();
     nl();
     cbreak();
-    let mut cx = 0;
     let mut cy = 0;
     loop {
+        stdscr.refresh();
         draw_buffer(buffer.buffer.clone(), &mut stdscr);
         draw_info(&mut stdscr, &buffer);
         move_cursor(buffer.cursor as i32, cy, &mut stdscr);
-        stdscr.refresh();
 
         match stdscr.getch() {
             Some(Input::Character(c)) => {
@@ -23,7 +26,6 @@ fn main() {
                     cy += 1;
                     buffer.cursor = 0;
                     buffer.insert('\n');
-                    continue;
                 }
                 buffer.insert(c);
             }
@@ -33,10 +35,9 @@ fn main() {
                 buffer.insert('\n');
             }
             Some(Input::KeyRight) => {
-                // if buffer.buffer[buffer.cursor + 1] != '\0' {
-                //    buffer.cursor += 1;
-                // }
-                buffer.cursor += 1;
+                if buffer.cursor < buffer.len() {
+                    buffer.cursor += 1;
+                }
             }
             Some(Input::KeyLeft) => {
                 if buffer.cursor > 0 {
@@ -44,8 +45,11 @@ fn main() {
                 }
             }
             Some(Input::KeyDC) => {
-                buffer.delete();
-                stdscr.clear();
+                if buffer.cursor > 0 {
+                    buffer.cursor -= 1;
+                    buffer.delete();
+                    stdscr.clear();
+                }
             }
 
             _ => (),
@@ -67,7 +71,6 @@ fn draw_buffer(buffer: Vec<char>, stdscr: &mut Window) {
             x += 1;
         }
     }
-
 }
 fn move_cursor(x: i32, y: i32, stdscr: &mut Window) {
     stdscr.mv(y, x);

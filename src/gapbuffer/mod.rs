@@ -63,13 +63,9 @@ impl GapBuffer {
         self.gap_start += 1;
     }
     pub fn delete(&mut self) {
-        if self.gap_start > 0 && self.cursor > 0 {
-            self.cursor -= 1;
-            self.gap_start -= 1;
-        }
-        for i in self.gap_start..self.gap_end {
-            self.buffer[i] = '\0';
-        }
+        self.place_gap();
+        self.buffer[self.gap_end] = '\0';
+        self.gap_end += 1;
     }
     pub fn new(size: usize) -> GapBuffer {
         GapBuffer {
@@ -78,6 +74,15 @@ impl GapBuffer {
             gap_end: size,
             cursor: 0,
         }
+    }
+    pub fn len(&self) -> usize {
+        let mut len: usize = 0;
+        for i in self.buffer.clone() {
+            if i != '\0' {
+                len += 1
+            }
+        }
+        len
     }
 }
 impl Display for GapBuffer {
@@ -106,67 +111,4 @@ mod tests {
         assert_eq!('a', buffer.buffer[3]);
         assert_eq!('c', buffer.buffer[4]);
     }
-    //#[test]
-    fn test_gap_check_1() {
-        use gapbuffer::GapBuffer;
-        let mut buffer = GapBuffer::new(5);
-        assert_eq!(4, buffer.gap_end - buffer.gap_start);
-        buffer.insert('a');
-        assert_eq!(3, buffer.gap_end - buffer.gap_start);
-        buffer.cursor = 0;
-        buffer.insert('b');
-        assert_eq!(2, buffer.gap_end - buffer.gap_start);
-        buffer.insert('b');
-        assert_eq!(1, buffer.gap_end - buffer.gap_start);
-        buffer.insert('b');
-        assert_eq!(0, buffer.gap_end - buffer.gap_start);
-        buffer.insert('b');
-
-        assert_eq!(4, buffer.gap_end - buffer.gap_start);
-    }
-    #[test]
-    fn test_gap_check_2() {
-        use gapbuffer::GapBuffer;
-        let mut buffer = GapBuffer::new(5);
-        buffer.insert('a');
-        buffer.cursor = 3;
-        buffer.insert('b');
-        assert_eq!('a', buffer.buffer[0]);
-        assert_eq!('b', buffer.buffer[3]);
-    }
-    #[test]
-    fn test_gap_check_3() {
-        use gapbuffer::GapBuffer;
-        let mut buffer = GapBuffer::new(5);
-        buffer.insert('a');
-        buffer.insert('b');
-        buffer.insert('c');
-        buffer.insert('d');
-        assert_eq!('a', buffer.buffer[0]);
-        assert_eq!('b', buffer.buffer[1]);
-        assert_eq!('c', buffer.buffer[2]);
-        assert_eq!('d', buffer.buffer[3]);
-
-        buffer.cursor = 2;
-        buffer.insert(' ');
-        assert_eq!(' ', buffer.buffer[2]);
-        assert_eq!('c', buffer.buffer[3]);
-    }
-    #[test]
-    fn test_gap_check_4() {
-        use gapbuffer::GapBuffer;
-        let mut buffer = GapBuffer::new(5);
-        buffer.insert('a');
-        buffer.insert('b');
-        assert_eq!('a', buffer.buffer[0]);
-        assert_eq!('b', buffer.buffer[1]);
-        buffer.cursor = 0;
-        buffer.insert(' ');
-        assert_eq!(' ', buffer.buffer[0]);
-        assert_eq!('a', buffer.buffer[3]);
-        assert_eq!('b', buffer.buffer[4]);
-        assert_eq!(1, buffer.gap_start);
-        assert_eq!(4, buffer.gap_end);
-    }
-
 }
