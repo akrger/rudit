@@ -6,3 +6,4 @@ authors = ["André Krüger <zeldamer@t-online.de>"]
 [dependencies]
 ncurses = "5.85.0"
 pancurses = "0.8"
+termion = "*"
