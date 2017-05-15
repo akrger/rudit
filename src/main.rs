@@ -14,11 +14,17 @@ fn main() {
     let mut index = 0;
     let mut cx: u16 = 3;
     let mut cy: u16 = 1;
+    // buffer.insert(0, 'a');
+    // buffer.insert(1, 'b');
+    // buffer.insert(2, '\n');
+    // buffer.insert(3, 'c');
+    // index = 3;
+    // cy = 2;
     write!(stdout,
            "{}{}",
            termion::clear::All,
            termion::cursor::Goto(cx, cy))
-            .unwrap();
+        .unwrap();
     stdout.flush().unwrap();
     'main: loop {
 
@@ -42,14 +48,32 @@ fn main() {
                     index += 1;
                     cx += 1;
                 }
+                Key::Up => {
+                    cy -= 1;
+                }
                 Key::Left => {
-                    if cx > 0 {
+                    if cx > 3 {
                         cx -= 1;
                         index -= 1;
                     }
                 }
                 Key::Right => {
-                    if cx as usize <= buffer.len() {
+                    // inefficient(?)
+                    // let mut b = vec!['\0'; buffer.buffer.len()];
+                    // for i in 0..buffer.gap_start {
+                    //     b[i] = buffer.buffer[i];
+                    // }
+                    // for i in buffer.gap_end..buffer.buffer.len() {
+                    //     b[i - (buffer.gap_end - buffer.gap_start)] = buffer.buffer[i];
+                    // }
+                    // if b[index] != '\0' {
+                    //     cx += 1;
+                    //     index += 1;
+                    // }
+
+                    // better
+                    if buffer.buffer[index] != '\0' ||
+                       buffer.buffer[buffer.buffer.len() - index + buffer.gap_start - 1] != '\0' {
                         cx += 1;
                         index += 1;
                     }
@@ -64,6 +88,7 @@ fn main() {
         break;
     }
 }
+
 fn draw_lines(stdout: &mut termion::raw::RawTerminal<std::io::Stdout>, buffer: &Vec<char>) {
     let s: String = buffer.iter().collect();
     for (index, i) in s.split('\n').enumerate() {
@@ -73,7 +98,7 @@ fn draw_lines(stdout: &mut termion::raw::RawTerminal<std::io::Stdout>, buffer: &
                index,
                Goto(3, (index + 1) as u16),
                i)
-                .unwrap();
+            .unwrap();
     }
 }
 
