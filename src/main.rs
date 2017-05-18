@@ -70,6 +70,10 @@ fn main() {
                     index = (cy as usize) - 1 +
                             std::cmp::min((cx as usize) - 3, count_previous_line - 1);
                     index -= 1;
+                    if cx - 3 > count_previous_line as u16 {
+                        cx -= count_previous_line as u16 + 3;
+
+                    }
                     cy -= 1;
                 }
                 Key::Left => {
