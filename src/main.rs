@@ -24,7 +24,7 @@ fn main() {
            "{}{}",
            termion::clear::All,
            termion::cursor::Goto(cx, cy))
-        .unwrap();
+            .unwrap();
     stdout.flush().unwrap();
     'main: loop {
 
@@ -49,6 +49,27 @@ fn main() {
                     cx += 1;
                 }
                 Key::Up => {
+                    let mut new_line_pos = index;
+                    let mut count_previous_line = 0;
+                    for i in (0..index).rev() {
+                        new_line_pos -= 1;
+                        if i == 0 || buffer.buffer[i] == '\n' {
+                            break;
+                        }
+                    }
+                    if new_line_pos == 0 {
+                        count_previous_line = 1;
+                    }
+                    for i in (0..new_line_pos).rev() {
+                        count_previous_line += 1;
+                        if i == 0 || buffer.buffer[i] == '\n' {
+                            count_previous_line += 1;
+                            break;
+                        }
+                    }
+                    index = (cy as usize) - 1 +
+                            std::cmp::min((cx as usize) - 3, count_previous_line - 1);
+                    index -= 1;
                     cy -= 1;
                 }
                 Key::Left => {
@@ -58,20 +79,6 @@ fn main() {
                     }
                 }
                 Key::Right => {
-                    // inefficient(?)
-                    // let mut b = vec!['\0'; buffer.buffer.len()];
-                    // for i in 0..buffer.gap_start {
-                    //     b[i] = buffer.buffer[i];
-                    // }
-                    // for i in buffer.gap_end..buffer.buffer.len() {
-                    //     b[i - (buffer.gap_end - buffer.gap_start)] = buffer.buffer[i];
-                    // }
-                    // if b[index] != '\0' {
-                    //     cx += 1;
-                    //     index += 1;
-                    // }
-
-                    // better
                     if buffer.buffer[index] != '\0' ||
                        buffer.buffer[buffer.buffer.len() - index + buffer.gap_start - 1] != '\0' {
                         cx += 1;
@@ -95,10 +102,10 @@ fn draw_lines(stdout: &mut termion::raw::RawTerminal<std::io::Stdout>, buffer: &
         write!(stdout,
                "{}{}{}{}",
                Goto(0, (index + 1) as u16),
-               index,
+               index + 1,
                Goto(3, (index + 1) as u16),
                i)
-            .unwrap();
+                .unwrap();
     }
 }
 
