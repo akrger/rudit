@@ -24,11 +24,11 @@ fn main() {
            "{}{}",
            termion::clear::All,
            termion::cursor::Goto(cx, cy))
-            .unwrap();
+        .unwrap();
     stdout.flush().unwrap();
     'main: loop {
 
-        write!(stdout, "{}", termion::clear::CurrentLine).unwrap();
+        write!(stdout, "{}", termion::clear::All).unwrap();
 
         draw_lines(&mut stdout, &buffer.buffer);
         draw_cursor(&mut stdout, cx, cy);
@@ -49,31 +49,42 @@ fn main() {
                     cx += 1;
                 }
                 Key::Up => {
-                    let mut new_line_pos = index;
-                    let mut count_previous_line = 0;
+                    let mut new_line_pos = 0;
                     for i in (0..index).rev() {
-                        new_line_pos -= 1;
-                        if i == 0 || buffer.buffer[i] == '\n' {
+                        if buffer.buffer[i] == '\n' {
+                            new_line_pos = i;
                             break;
                         }
                     }
+                    let mut prev_line = new_line_pos;
+                    for i in (0..new_line_pos).rev() {
+                        if buffer.buffer[i] == '\n' {
+                            break;
+                        }
+                        prev_line -= 1;
+                    }
+                    let mut count_previous_line = 0;
                     if new_line_pos == 0 {
+                        new_line_pos += 1;
                         count_previous_line = 1;
+                    } else {
+                        count_previous_line += 1;
                     }
                     for i in (0..new_line_pos).rev() {
                         count_previous_line += 1;
-                        if i == 0 || buffer.buffer[i] == '\n' {
-                            count_previous_line += 1;
+                        if buffer.buffer[i] == '\n' {
+                            count_previous_line -= 1;
                             break;
                         }
-                    }
-                    index = (cy as usize) - 1 +
-                            std::cmp::min((cx as usize) - 3, count_previous_line - 1);
-                    index -= 1;
-                    if cx - 3 > count_previous_line as u16 {
-                        cx -= count_previous_line as u16 + 3;
 
                     }
+
+                    index = prev_line + std::cmp::min((cx as usize - 3), count_previous_line - 1);
+                    if cx - 3 >= count_previous_line as u16 {
+                        cx = count_previous_line as u16 + 2;
+                    }
+                    // println!("");
+                    // println!("size {} prevline {}", count_previous_line, prev_line);
                     cy -= 1;
                 }
                 Key::Left => {
@@ -109,7 +120,7 @@ fn draw_lines(stdout: &mut termion::raw::RawTerminal<std::io::Stdout>, buffer: &
                index + 1,
                Goto(3, (index + 1) as u16),
                i)
-                .unwrap();
+            .unwrap();
     }
 }
 
