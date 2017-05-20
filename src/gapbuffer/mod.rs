@@ -81,6 +81,41 @@ impl GapBuffer {
         }
         len
     }
+    pub fn get_line(&self, line_num: usize) -> &[char] {
+        let mut line_start = 0;
+        let mut line_end = 0;
+        let mut eol_count = 0;
+        if line_num == 1 {
+            for i in 0..self.buffer.len() {
+                line_end += 1;
+                if self.buffer[i] == '\n' {
+                    break;
+                }
+            }
+            &self.buffer[0..line_end]
+        } else {
+            for i in 0..self.buffer.len() {
+                if self.buffer[i] == '\n' {
+                    eol_count += 1;
+                }
+                if eol_count == line_num - 1 {
+                    line_start += 1;
+                    break;
+                } else {
+                    line_start += 1;
+                }
+            }
+            line_end = line_start;
+            for i in line_start..self.buffer.len() {
+                if self.buffer[i] == '\n' {
+                    line_end += 1;
+                    break;
+                }
+                line_end += 1;
+            }
+            &self.buffer[line_start..line_end]
+        }
+    }
 }
 impl Display for GapBuffer {
     fn fmt(&self, f: &mut Formatter) -> Result {
