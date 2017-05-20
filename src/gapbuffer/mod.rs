@@ -85,7 +85,7 @@ impl GapBuffer {
         let mut line_start = 0;
         let mut line_end = 0;
         let mut eol_count = 0;
-        if line_num == 1 {
+        if line_num == 0 {
             for i in 0..self.buffer.len() {
                 line_end += 1;
                 if self.buffer[i] == '\n' {
@@ -98,7 +98,7 @@ impl GapBuffer {
                 if self.buffer[i] == '\n' {
                     eol_count += 1;
                 }
-                if eol_count == line_num - 1 {
+                if eol_count == line_num {
                     line_start += 1;
                     break;
                 } else {
@@ -114,6 +114,25 @@ impl GapBuffer {
                 line_end += 1;
             }
             &self.buffer[line_start..line_end]
+        }
+    }
+    pub fn line_index_to_char_index(&self, line_num: usize) -> usize {
+        let mut eol_count = 0;
+        let mut index = 0;
+        if line_num == 0 {
+            index
+        } else {
+            for i in 0..self.buffer.len() {
+                if self.buffer[i] == '\n' {
+                    eol_count += 1;
+                }
+                if eol_count == line_num {
+                    index += 1;
+                    break;
+                }
+                index += 1;
+            }
+            index
         }
     }
 }

@@ -28,11 +28,12 @@ fn main() {
     stdout.flush().unwrap();
     'main: loop {
 
-        write!(stdout, "{}", termion::clear::All).unwrap();
+        // write!(stdout, "{}", termion::clear::All).unwrap();
 
         draw_lines(&mut stdout, &buffer.buffer);
         draw_cursor(&mut stdout, cx, cy);
-
+        // println!("         ");
+        // println!("{}", index);
         stdout.flush().unwrap();
 
         for c in std::io::stdin().keys() {
@@ -49,43 +50,13 @@ fn main() {
                     cx += 1;
                 }
                 Key::Up => {
-                    let mut new_line_pos = 0;
-                    for i in (0..index).rev() {
-                        if buffer.buffer[i] == '\n' {
-                            new_line_pos = i;
-                            break;
-                        }
+                    if cy > 1 {
+                        cy -= 1;
+                        let prev_line = buffer.line_index_to_char_index(cy as usize - 1);
+                        let prev_line_size = buffer.get_line(cy as usize - 1).len();
+                        index = prev_line + std::cmp::min((cx as usize - 3), prev_line_size - 1);
+                        println!("prevline {} prevline_size {}", prev_line, prev_line_size);
                     }
-                    let mut prev_line = new_line_pos;
-                    for i in (0..new_line_pos).rev() {
-                        if buffer.buffer[i] == '\n' {
-                            break;
-                        }
-                        prev_line -= 1;
-                    }
-                    let mut count_previous_line = 0;
-                    if new_line_pos == 0 {
-                        new_line_pos += 1;
-                        count_previous_line = 1;
-                    } else {
-                        count_previous_line += 1;
-                    }
-                    for i in (0..new_line_pos).rev() {
-                        count_previous_line += 1;
-                        if buffer.buffer[i] == '\n' {
-                            count_previous_line -= 1;
-                            break;
-                        }
-
-                    }
-
-                    index = prev_line + std::cmp::min((cx as usize - 3), count_previous_line - 1);
-                    if cx - 3 >= count_previous_line as u16 {
-                        cx = count_previous_line as u16 + 2;
-                    }
-                    // println!("");
-                    // println!("size {} prevline {}", count_previous_line, prev_line);
-                    cy -= 1;
                 }
                 Key::Left => {
                     if cx > 3 {
