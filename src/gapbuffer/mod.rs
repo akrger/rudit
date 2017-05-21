@@ -83,7 +83,6 @@ impl GapBuffer {
     }
     pub fn get_line_size(&self, line_num: usize) -> usize {
         let mut line_start = 0;
-        let mut line_end = 0;
         let mut eol_count = 0;
 
         if line_num == 1 {
@@ -121,7 +120,7 @@ impl GapBuffer {
                 }
             }
             line_start = eol_count + 1;
-            line_end = eol_count + 1;
+            let mut line_end = eol_count + 1;
             for i in line_start..self.buffer.len() {
                 if self.buffer[i] == '\n' {
                     line_end += 1;
@@ -134,6 +133,31 @@ impl GapBuffer {
                 line_end += 1;
             }
             return self.buffer[line_start..line_end].len();
+        }
+    }
+    pub fn line_index_to_char_index(&self, line_num: usize) -> usize {
+        let mut eol_count = 0;
+        let mut index = 0;
+        if line_num == 1 {
+            return 0;
+        } else {
+            for i in 0..self.buffer.len() {
+                if self.buffer[i] == '\n' {
+                    eol_count += 1;
+                }
+                if eol_count == line_num - 1 {
+                    eol_count = i;
+                    break;
+                }
+            }
+            // not working (only for upside cursor movement)
+            for i in 0..eol_count + 1 {
+                if self.buffer[i] == '\0' {
+                    continue;
+                }
+                index += 1;
+            }
+            index
         }
     }
 }
