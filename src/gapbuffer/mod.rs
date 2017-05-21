@@ -81,83 +81,68 @@ impl GapBuffer {
         }
         len
     }
-    pub fn get_line_size(&self, line_num: usize) -> usize {
+
+    pub fn get_line_size(&self, line_num: usize) -> (usize, usize, usize) {
         let mut line_start = 0;
+        let mut line_end = 0;
         let mut eol_count = 0;
+        let mut eol_pos = 0;
 
         if line_num == 1 {
+
             for i in 0..self.buffer.len() {
                 if self.buffer[i] == '\n' {
+                    eol_pos += 1;
+                    eol_count += 1;
+                }
+                if eol_count == line_num {
                     break;
                 }
-                // don't count empty char
-                if self.buffer[i] == '\0' {
-                    continue;
-                }
-                eol_count += 1;
+                eol_pos += 1;
             }
-            for i in eol_count..self.buffer.len() {
-                if self.buffer[i] == '\n' {
-                    // newline counts, too
-                    eol_count = i + 1;
-                    break;
-                }
-                // if gap moved
-                if self.buffer[i] == '\0' {
-                    break;
-                }
-            }
-            return self.buffer[line_start..eol_count].len();
+
+            return (self.buffer[line_start..eol_pos].len(), line_start, eol_pos);
         } else {
-            // move to newline
             for i in 0..self.buffer.len() {
                 if self.buffer[i] == '\n' {
                     eol_count += 1;
                 }
                 if eol_count == line_num - 1 {
-                    eol_count = i;
                     break;
                 }
+                if self.buffer[i] != '\0' {
+                    eol_pos += 1;
+                } else if self.buffer[i] == '\0' {
+                    eol_count = 0;
+                    eol_pos = 0;
+                    for i in 0..self.buffer.len() {
+                        if self.buffer[i] == '\n' {
+                            eol_count += 1;
+                        }
+                        if eol_count == line_num - 1 {
+                            break;
+                        }
+                        if self.buffer[i] != '\0' {
+                            eol_pos += 1;
+                        }
+                    }
+                }
             }
-            line_start = eol_count + 1;
-            let mut line_end = eol_count + 1;
-            for i in line_start..self.buffer.len() {
+
+            line_end = eol_pos + 1;
+            line_start = eol_pos + 1;
+
+            for i in eol_pos + 1..self.buffer.len() {
                 if self.buffer[i] == '\n' {
                     line_end += 1;
                     break;
                 }
-                // if gap moved
-                if self.buffer[i] == '\0' {
-                    continue;
-                }
-                line_end += 1;
-            }
-            return self.buffer[line_start..line_end].len();
-        }
-    }
-    pub fn line_index_to_char_index(&self, line_num: usize) -> usize {
-        let mut eol_count = 0;
-        let mut index = 0;
-        if line_num == 1 {
-            return 0;
-        } else {
-            for i in 0..self.buffer.len() {
-                if self.buffer[i] == '\n' {
-                    eol_count += 1;
-                }
-                if eol_count == line_num - 1 {
-                    eol_count = i;
-                    break;
+                if self.buffer[i] != '\0' {
+                    line_end += 1;
                 }
             }
-            // not working (only for upside cursor movement)
-            for i in 0..eol_count + 1 {
-                if self.buffer[i] == '\0' {
-                    continue;
-                }
-                index += 1;
-            }
-            index
+
+            return (self.buffer[line_start..line_end].len(), line_start, line_end);
         }
     }
 }

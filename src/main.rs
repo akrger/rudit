@@ -17,8 +17,7 @@ fn main() {
     let mut cx: u16 = 3;
     let mut cy: u16 = 1;
     let mut line_num = 1;
-    let mut line_size: usize = buffer.get_line_size(cy as usize);
-    let mut line: usize = buffer.line_index_to_char_index(cy as usize);
+    let (mut line_size, mut start, mut end) = buffer.get_line_size(cy as usize);
 
     write!(stdout,
            "{}{}",
@@ -27,10 +26,19 @@ fn main() {
         .unwrap();
     stdout.flush().unwrap();
     'main: loop {
-        write!(stdout, "{}", termion::clear::All).unwrap();
+        // write!(stdout, "{}", termion::clear::All).unwrap();
 
         draw_lines(&mut stdout, &buffer.buffer);
-        draw_info(&mut stdout, index, line_num, cx, cy, line_size, line);
+        draw_info(&mut stdout,
+                  index,
+                  line_num,
+                  cx,
+                  cy,
+                  line_size,
+                  start,
+                  end,
+                  buffer.gap_start,
+                  buffer.gap_end);
         draw_cursor(&mut stdout, cx, cy);
         stdout.flush().unwrap();
 
@@ -42,35 +50,43 @@ fn main() {
                     cy += 1;
                     index += 1;
                     line_num += 1;
-                    line_size = buffer.get_line_size(cy as usize);
-                    line = buffer.line_index_to_char_index(cy as usize);
+                    line_size = buffer.get_line_size(cy as usize).0;
+                    start = buffer.get_line_size(cy as usize).1;
+                    end = buffer.get_line_size(cy as usize).2;
                 }
                 Key::Char(c) => {
                     buffer.insert(index, c);
                     index += 1;
                     cx += 1;
-                    line_size = buffer.get_line_size(cy as usize);
-                    line = buffer.line_index_to_char_index(cy as usize);
+                    line_size = buffer.get_line_size(cy as usize).0;
+                    start = buffer.get_line_size(cy as usize).1;
+                    end = buffer.get_line_size(cy as usize).2;
+
                 }
                 Key::Up => {
                     if cy > 1 {
-                        line_size = buffer.get_line_size(cy as usize - 1);
-                        line = buffer.line_index_to_char_index(cy as usize - 1);
-                        index = line + std::cmp::min((cx as usize - 3), line_size - 1);
-                        if line_size < buffer.get_line_size(cy as usize) {
-                            cx = line_size as u16 + 2;
-                        }
                         cy -= 1;
+                        line_size = buffer.get_line_size(cy as usize).0;
+                        start = buffer.get_line_size(cy as usize).1;
+                        end = buffer.get_line_size(cy as usize).2;
+                        if cx - 3 < line_size as u16 {
+                            index = start + cx as usize - 3;
+                        } else {
+                            index = end;
+                        }
                     }
                 }
                 Key::Down => {
                     if cy < line_num as u16 {
-                        line_size = buffer.get_line_size(cy as usize + 1);
-                        line = buffer.line_index_to_char_index(cy as usize + 1);
-                        index = line + std::cmp::min((cx as usize - 3), line_size - 1);
                         cy += 1;
-                        if cx > line_size as u16 {
-                            cx = line_size as u16 + 3;
+                        line_size = buffer.get_line_size(cy as usize).0;
+                        start = buffer.get_line_size(cy as usize).1;
+                        end = buffer.get_line_size(cy as usize).2;
+                        if start == end {
+                            index = end;
+                        }
+                        if cx - 3 < buffer.get_line_size(cy as usize - 1).0 as u16 {
+                            index = start + cx as usize - 3;
                         }
                     }
                 }
@@ -78,17 +94,20 @@ fn main() {
                     if cx > 3 {
                         cx -= 1;
                         index -= 1;
-                        line_size = buffer.get_line_size(cy as usize);
-                        line = buffer.line_index_to_char_index(cy as usize);
+                        line_size = buffer.get_line_size(cy as usize).0;
+                        start = buffer.get_line_size(cy as usize).1;
+                        end = buffer.get_line_size(cy as usize).2;
                     }
                 }
                 Key::Right => {
                     // not working correctly
-                    if cx - 3 < buffer.get_line_size(cy as usize) as u16 - 1 {
+                    if cx - 3 < buffer.get_line_size(cy as usize).0 as u16 &&
+                       buffer.buffer[index] != '\n' {
                         cx += 1;
                         index += 1;
-                        line_size = buffer.get_line_size(cy as usize);
-                        line = buffer.line_index_to_char_index(cy as usize);
+                        line_size = buffer.get_line_size(cy as usize).0;
+                        start = buffer.get_line_size(cy as usize).1;
+                        end = buffer.get_line_size(cy as usize).2;
                     }
                 }
                 Key::Esc => break,
@@ -107,16 +126,22 @@ fn draw_info(stdout: &mut RawTerminal<Stdout>,
              cx: u16,
              cy: u16,
              line_size: usize,
-             line: usize) {
+             start: usize,
+             end: usize,
+             gs: usize,
+             ge: usize) {
     write!(stdout,
-           "{} index {} line_num {} cx {} cy {} line_size {} line {}",
+           "{} index {} line_num {} cx {} cy {} line_size {} start   {} end   {}      gs {} ge {}",
            termion::cursor::Goto(0, termion::terminal_size().unwrap().1),
            index,
            line_num,
            cx - 2,
            cy,
            line_size,
-           line)
+           start,
+           end,
+           gs,
+           ge)
         .unwrap();
 }
 fn draw_lines(stdout: &mut RawTerminal<Stdout>, buffer: &Vec<char>) {
