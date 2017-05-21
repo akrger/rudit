@@ -14,9 +14,10 @@ fn main() {
     let mut buffer = GapBuffer::new(30);
     let mut stdout = stdout().into_raw_mode().unwrap();
     let mut index = 0;
-    let mut line_num = 1;
     let mut cx: u16 = 3;
     let mut cy: u16 = 1;
+    let mut line_num = 1;
+    let mut line_size: usize = buffer.get_line_size(cy as usize);
     write!(stdout,
            "{}{}",
            termion::clear::All,
@@ -27,7 +28,7 @@ fn main() {
         write!(stdout, "{}", termion::clear::All).unwrap();
 
         draw_lines(&mut stdout, &buffer.buffer);
-        draw_info(&mut stdout, index, line_num, cx, cy);
+        draw_info(&mut stdout, index, line_num, cx, cy, line_size);
         draw_cursor(&mut stdout, cx, cy);
         stdout.flush().unwrap();
 
@@ -39,20 +40,25 @@ fn main() {
                     cy += 1;
                     index += 1;
                     line_num += 1;
+                    line_size = buffer.get_line_size(cy as usize);
                 }
                 Key::Char(c) => {
                     buffer.insert(index, c);
                     index += 1;
                     cx += 1;
+                    line_size = buffer.get_line_size(cy as usize);
                 }
                 Key::Up => {
                     if cy > 1 {
                         cy -= 1;
+                        index = 0;
+                        line_size = buffer.get_line_size(cy as usize);
                     }
                 }
                 Key::Down => {
                     if cy < line_num as u16 {
                         cy += 1;
+                        line_size = buffer.get_line_size(cy as usize);
                     }
                 }
                 Key::Left => {
@@ -78,14 +84,20 @@ fn main() {
         break;
     }
 }
-fn draw_info(stdout: &mut RawTerminal<Stdout>, index: usize, line_num: usize, cx: u16, cy: u16) {
+fn draw_info(stdout: &mut RawTerminal<Stdout>,
+             index: usize,
+             line_num: usize,
+             cx: u16,
+             cy: u16,
+             line_size: usize) {
     write!(stdout,
-           "{} index {} line_num {} cx {} cy {}",
+           "{} index {} line_num {} cx {} cy {} line_size {}",
            termion::cursor::Goto(0, termion::terminal_size().unwrap().1),
            index,
            line_num,
            cx - 2,
-           cy)
+           cy,
+           line_size)
         .unwrap();
 }
 fn draw_lines(stdout: &mut RawTerminal<Stdout>, buffer: &Vec<char>) {

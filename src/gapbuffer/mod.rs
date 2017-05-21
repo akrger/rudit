@@ -81,61 +81,42 @@ impl GapBuffer {
         }
         len
     }
-    pub fn get_line(&self, line_num: usize) -> &[char] {
+    pub fn get_line_size(&self, line_num: usize) -> usize {
         let mut line_start = 0;
         let mut line_end = 0;
         let mut eol_count = 0;
-        if line_num == 0 {
+
+        if line_num == 1 {
             for i in 0..self.buffer.len() {
-                line_end += 1;
                 if self.buffer[i] == '\n' {
                     break;
                 }
+                // don't count empty char
+                if self.buffer[i] == '\0' {
+                    continue;
+                }
+                eol_count += 1;
             }
-            &self.buffer[0..line_end]
-        } else {
-            for i in 0..self.buffer.len() {
+            for i in eol_count..self.buffer.len() {
                 if self.buffer[i] == '\n' {
+                    // newline counts, too
+                    eol_count = i + 1;
+                    break;
+                }
+                // if gap moved
+                if self.buffer[i] == '\0' {
+                    // eol needs to be accounted for
                     eol_count += 1;
-                }
-                if eol_count == line_num {
-                    line_start += 1;
-                    break;
-                } else {
-                    line_start += 1;
-                }
-            }
-            line_end = line_start;
-            for i in line_start..self.buffer.len() {
-                if self.buffer[i] == '\n' {
-                    line_end += 1;
                     break;
                 }
-                line_end += 1;
             }
-            &self.buffer[line_start..line_end]
-        }
-    }
-    pub fn line_index_to_char_index(&self, line_num: usize) -> usize {
-        let mut eol_count = 0;
-        let mut index = 0;
-        if line_num == 0 {
-            index
+            return self.buffer[line_start..eol_count].len();
         } else {
-            for i in 0..self.buffer.len() {
-                if self.buffer[i] == '\n' {
-                    eol_count += 1;
-                }
-                if eol_count == line_num {
-                    index += 1;
-                    break;
-                }
-                index += 1;
-            }
-            index
+            return self.buffer[line_start..line_end].len();
         }
     }
 }
+
 impl Display for GapBuffer {
     fn fmt(&self, f: &mut Formatter) -> Result {
         let mut string = String::new();
@@ -145,6 +126,7 @@ impl Display for GapBuffer {
         write!(f, "{}", string)
     }
 }
+
 #[cfg(test)]
 mod tests {
     #[test]
