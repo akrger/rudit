@@ -105,8 +105,6 @@ impl GapBuffer {
                 }
                 // if gap moved
                 if self.buffer[i] == '\0' {
-                    // eol needs to be accounted for
-                    eol_count += 1;
                     break;
                 }
             }
