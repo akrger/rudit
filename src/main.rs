@@ -1,13 +1,14 @@
 extern crate rudit;
 extern crate termion;
 
-use std::io::{Write, stdout};
+use std::io::{Write, stdout, Stdout};
+
 use termion::raw::IntoRawMode;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::cursor::Goto;
+use termion::raw::RawTerminal;
 use rudit::gapbuffer::GapBuffer;
-use termion::cursor::DetectCursorPos;
 
 fn main() {
     let mut buffer = GapBuffer::new(30);
@@ -77,11 +78,7 @@ fn main() {
         break;
     }
 }
-fn draw_info(stdout: &mut termion::raw::RawTerminal<std::io::Stdout>,
-             index: usize,
-             line_num: usize,
-             cx: u16,
-             cy: u16) {
+fn draw_info(stdout: &mut RawTerminal<Stdout>, index: usize, line_num: usize, cx: u16, cy: u16) {
     write!(stdout,
            "{} index {} line_num {} cx {} cy {}",
            termion::cursor::Goto(0, termion::terminal_size().unwrap().1),
@@ -91,7 +88,7 @@ fn draw_info(stdout: &mut termion::raw::RawTerminal<std::io::Stdout>,
            cy)
         .unwrap();
 }
-fn draw_lines(stdout: &mut termion::raw::RawTerminal<std::io::Stdout>, buffer: &Vec<char>) {
+fn draw_lines(stdout: &mut RawTerminal<Stdout>, buffer: &Vec<char>) {
     let s: String = buffer.iter().collect();
     for (index, i) in s.split('\n').enumerate() {
         write!(stdout,
@@ -104,6 +101,6 @@ fn draw_lines(stdout: &mut termion::raw::RawTerminal<std::io::Stdout>, buffer: &
     }
 }
 
-fn draw_cursor(stdout: &mut termion::raw::RawTerminal<std::io::Stdout>, cx: u16, cy: u16) {
+fn draw_cursor(stdout: &mut RawTerminal<Stdout>, cx: u16, cy: u16) {
     write!(stdout, "{}", termion::cursor::Goto(cx, cy)).unwrap();
 }
