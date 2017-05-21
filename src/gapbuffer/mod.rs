@@ -98,7 +98,9 @@ impl GapBuffer {
                 if eol_count == line_num {
                     break;
                 }
-                eol_pos += 1;
+                if self.buffer[i] != '\0' {
+                    eol_pos += 1;
+                }
             }
 
             return (self.buffer[line_start..eol_pos].len(), line_start, eol_pos);

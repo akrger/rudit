@@ -69,11 +69,13 @@ fn main() {
                         line_size = buffer.get_line_size(cy as usize).0;
                         start = buffer.get_line_size(cy as usize).1;
                         end = buffer.get_line_size(cy as usize).2;
-                        if cx - 3 < line_size as u16 {
-                            index = start + cx as usize - 3;
-                        } else {
-                            index = end;
-                        }
+
+                        //if cx - 3 < line_size as u16 {
+                        //    index = start + cx as usize - 3;
+                        //} else {
+                        //    index = end;
+                        //}
+                        index = start;
                     }
                 }
                 Key::Down => {
