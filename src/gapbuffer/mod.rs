@@ -129,8 +129,9 @@ impl GapBuffer {
                     line_end += 1;
                     break;
                 }
+                // if gap moved
                 if self.buffer[i] == '\0' {
-                    break;
+                    continue;
                 }
                 line_end += 1;
             }
