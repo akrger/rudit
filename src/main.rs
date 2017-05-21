@@ -51,7 +51,6 @@ fn main() {
                 Key::Up => {
                     if cy > 1 {
                         cy -= 1;
-                        index = 0;
                         line_size = buffer.get_line_size(cy as usize);
                     }
                 }

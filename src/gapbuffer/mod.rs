@@ -112,6 +112,28 @@ impl GapBuffer {
             }
             return self.buffer[line_start..eol_count].len();
         } else {
+            // move to newline
+            for i in 0..self.buffer.len() {
+                if self.buffer[i] == '\n' {
+                    eol_count += 1;
+                }
+                if eol_count == line_num - 1 {
+                    eol_count = i;
+                    break;
+                }
+            }
+            line_start = eol_count + 1;
+            line_end = eol_count + 1;
+            for i in line_start..self.buffer.len() {
+                if self.buffer[i] == '\n' {
+                    line_end += 1;
+                    break;
+                }
+                if self.buffer[i] == '\0' {
+                    break;
+                }
+                line_end += 1;
+            }
             return self.buffer[line_start..line_end].len();
         }
     }
