@@ -92,18 +92,18 @@ impl GapBuffer {
 
             for i in 0..self.buffer.len() {
                 if self.buffer[i] == '\n' {
-                    eol_pos += 1;
                     eol_count += 1;
                 }
                 if eol_count == line_num {
                     break;
                 }
                 if self.buffer[i] != '\0' {
+
                     eol_pos += 1;
                 }
             }
 
-            return (self.buffer[line_start..eol_pos].len(), line_start, eol_pos);
+            return (self.buffer[line_start..eol_pos + 1].len(), line_start, eol_pos);
         } else {
             for i in 0..self.buffer.len() {
                 if self.buffer[i] == '\n' {
@@ -136,7 +136,6 @@ impl GapBuffer {
 
             for i in eol_pos + 1..self.buffer.len() {
                 if self.buffer[i] == '\n' {
-                    line_end += 1;
                     break;
                 }
                 if self.buffer[i] != '\0' {
@@ -144,7 +143,7 @@ impl GapBuffer {
                 }
             }
 
-            return (self.buffer[line_start..line_end].len(), line_start, line_end);
+            return (self.buffer[line_start..line_end + 1].len(), line_start, line_end);
         }
     }
 }

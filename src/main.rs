@@ -69,13 +69,15 @@ fn main() {
                         line_size = buffer.get_line_size(cy as usize).0;
                         start = buffer.get_line_size(cy as usize).1;
                         end = buffer.get_line_size(cy as usize).2;
-
-                        //if cx - 3 < line_size as u16 {
-                        //    index = start + cx as usize - 3;
-                        //} else {
-                        //    index = end;
-                        //}
-                        index = start;
+                        // println!("{}",line_size);
+                        if buffer.get_line_size(cy as usize + 1).0 > line_size {
+                            cx = end as u16 + 3;
+                            index = end;
+                        } else if buffer.get_line_size(cy as usize + 1).0 == line_size {
+                            index = end - 1;
+                        } else {
+                            index = start + cx as usize - 3;
+                        }
                     }
                 }
                 Key::Down => {
@@ -84,11 +86,11 @@ fn main() {
                         line_size = buffer.get_line_size(cy as usize).0;
                         start = buffer.get_line_size(cy as usize).1;
                         end = buffer.get_line_size(cy as usize).2;
-                        if start == end {
-                            index = end;
-                        }
-                        if cx - 3 < buffer.get_line_size(cy as usize - 1).0 as u16 {
+                        if buffer.get_line_size(cy as usize - 1).0 > line_size {
+                            cx = (end - start) as u16 + 3;
                             index = start + cx as usize - 3;
+                        } else {
+                            index = cx as usize - 3 + start as usize;
                         }
                     }
                 }
