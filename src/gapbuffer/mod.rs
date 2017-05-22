@@ -89,47 +89,37 @@ impl GapBuffer {
         let mut eol_pos = 0;
         let mut zero_count = 0;
 
-        if line_num == 1 {
-            for i in 0..self.buffer.len() {
-                if self.buffer[i] == '\n' {
-                    eol_count += 1;
-                }
-                if eol_count == line_num {
-                    eol_pos = i - zero_count;
-                    break;
-                }
-                if self.buffer[i] == '\0' {
-                    zero_count += 1;
-                }
+        for i in 0..self.buffer.len() {
+            if self.buffer[i] == '\n' {
+                eol_count += 1;
             }
-            (self.buffer[0..eol_pos + 1].len(), 0, eol_pos)
+            if eol_count == line_num - 1 {
+                break;
+            }
+            if self.buffer[i] != '\0' {
+
+                eol_pos += 1;
+            }
+        }
+        if eol_pos == 0 {
+            line_start = 0;
+            line_end = 0;
         } else {
-            for i in 0..self.buffer.len() {
-                if self.buffer[i] == '\n' {
-                    eol_count += 1;
-                }
-                if eol_count == line_num - 1 {
-                    eol_pos = i - zero_count;
-                    break;
-                }
-                if self.buffer[i] == '\0' {
-                    zero_count += 1;
-                }
-            }
+            line_start = eol_pos + 2;
+            line_end = line_start;
 
-            zero_count = 0;
-            line_start = eol_pos;
-            line_end = eol_pos;
-
-            for i in eol_pos + 1..self.buffer.len() {
-                if self.buffer[i] == '\n' {
-                    line_end = i - zero_count - 1;
-                    break;
-                }
-                if self.buffer[i] == '\0' {
-                    zero_count += 1;
-                }
+        }
+        for i in line_start..self.buffer.len() {
+            if self.buffer[i] != '\0' {
+                line_end += 1;
             }
+            if self.buffer[i] == '\n' {
+                break;
+            }
+        }
+        if eol_pos == 0 {
+            (self.buffer[line_start..line_end].len(), line_start, line_end)
+        } else {
             (self.buffer[line_start..line_end + 1].len(), line_start, line_end)
         }
     }

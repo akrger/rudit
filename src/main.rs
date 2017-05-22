@@ -26,7 +26,7 @@ fn main() {
     stdout.flush().unwrap();
     // line_num = open_file(&mut buffer, line_num);
     'main: loop {
-        write!(stdout, "{}", termion::clear::All).unwrap();
+        //   write!(stdout, "{}", termion::clear::All).unwrap();
 
         draw_lines(&mut stdout, &buffer.buffer);
         draw_info(&mut stdout,
@@ -69,17 +69,24 @@ fn main() {
                         line_size = buffer.get_line_size(cy as usize).0;
                         start = buffer.get_line_size(cy as usize).1;
                         end = buffer.get_line_size(cy as usize).2;
-                        // println!("{}",line_size);
-                        if cx <= line_size as u16 + 1 {
-                            // println!("        bb    ");
-                            // println!("{}", buffer.get_line_size(cy as usize + 1).0);
-                            index = start + cx as usize - 3;
+
+                        if cx - 3 < line_size as u16 {
+                            index = cx as usize - 3 + start;
                         } else {
-                            // println!("[oooo]");
-                            cx = end as u16 + 3;
-                            index = end;
-                            //                            index = end;
+                            cx = end as u16 + 2;
+                            index = end - 1;
                         }
+
+                        // if cx <= line_size as u16 + 1 {
+                        //     // println!("        bb    ");
+                        //     // println!("{}", buffer.get_line_size(cy as usize + 1).0);
+                        //     index = start + cx as usize - 3;
+                        // } else {
+                        //     // println!("[oooo]");
+                        //     cx = end as u16 + 3;
+                        //     index = end;
+                        //     //                            index = end;
+                        // }
                     }
                 }
                 Key::Down => {
@@ -88,17 +95,6 @@ fn main() {
                         line_size = buffer.get_line_size(cy as usize).0;
                         start = buffer.get_line_size(cy as usize).1;
                         end = buffer.get_line_size(cy as usize).2;
-
-                        if line_size == 1 {
-                            cx = 3;
-                            index = start;
-                        }
-                        if cx <= line_size as u16 {
-                            println!("ortontriont");
-                            index = start + cx as usize - 3;
-
-                        }
-
 
                     }
                 }
@@ -172,11 +168,11 @@ fn draw_cursor(stdout: &mut RawTerminal<Stdout>, cx: u16, cy: u16) {
 }
 
 fn open_file(buffer: &mut GapBuffer, mut line_num: usize) -> usize {
-    use std::io::{BufRead, BufReader};
+    use std::io::BufReader;
     use std::fs::File;
     use std::io::prelude::*;
     let mut string = String::from("");
-    BufReader::new(File::open("/home/andre/test2").unwrap()).read_to_string(&mut string);
+    BufReader::new(File::open("/home/andre/test2").unwrap()).read_to_string(&mut string).unwrap();
     for (index, c) in string.chars().enumerate() {
         if c == '\n' {
             line_num += 1;
