@@ -87,63 +87,50 @@ impl GapBuffer {
         let mut line_end = 0;
         let mut eol_count = 0;
         let mut eol_pos = 0;
+        let mut zero_count = 0;
 
         if line_num == 1 {
-
             for i in 0..self.buffer.len() {
                 if self.buffer[i] == '\n' {
                     eol_count += 1;
                 }
                 if eol_count == line_num {
+                    eol_pos = i - zero_count;
                     break;
                 }
-                if self.buffer[i] != '\0' {
-
-                    eol_pos += 1;
+                if self.buffer[i] == '\0' {
+                    zero_count += 1;
                 }
             }
-
-            return (self.buffer[line_start..eol_pos + 1].len(), line_start, eol_pos);
+            (self.buffer[0..eol_pos + 1].len(), 0, eol_pos)
         } else {
             for i in 0..self.buffer.len() {
                 if self.buffer[i] == '\n' {
                     eol_count += 1;
                 }
                 if eol_count == line_num - 1 {
+                    eol_pos = i - zero_count;
                     break;
                 }
-                if self.buffer[i] != '\0' {
-                    eol_pos += 1;
-                } else if self.buffer[i] == '\0' {
-                    eol_count = 0;
-                    eol_pos = 0;
-                    for i in 0..self.buffer.len() {
-                        if self.buffer[i] == '\n' {
-                            eol_count += 1;
-                        }
-                        if eol_count == line_num - 1 {
-                            break;
-                        }
-                        if self.buffer[i] != '\0' {
-                            eol_pos += 1;
-                        }
-                    }
+                if self.buffer[i] == '\0' {
+                    zero_count += 1;
                 }
             }
 
-            line_end = eol_pos + 1;
-            line_start = eol_pos + 1;
+            zero_count = 0;
+            line_start = eol_pos;
+            line_end = eol_pos;
 
             for i in eol_pos + 1..self.buffer.len() {
                 if self.buffer[i] == '\n' {
+                    line_end = i - zero_count - 1;
                     break;
                 }
-                if self.buffer[i] != '\0' {
-                    line_end += 1;
+                if self.buffer[i] == '\0' {
+                    zero_count += 1;
                 }
             }
-
-            return (self.buffer[line_start..line_end + 1].len(), line_start, line_end);
+            (self.buffer[line_start..line_end + 1].len(), line_start, line_end)
         }
     }
 }

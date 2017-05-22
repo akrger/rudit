@@ -11,22 +11,22 @@ use termion::raw::RawTerminal;
 use rudit::gapbuffer::GapBuffer;
 
 fn main() {
-    let mut buffer = GapBuffer::new(30);
+    let mut buffer = GapBuffer::new(50);
     let mut stdout = stdout().into_raw_mode().unwrap();
     let mut index = 0;
     let mut cx: u16 = 3;
     let mut cy: u16 = 1;
     let mut line_num = 1;
     let (mut line_size, mut start, mut end) = buffer.get_line_size(cy as usize);
-
     write!(stdout,
            "{}{}",
            termion::clear::All,
            termion::cursor::Goto(cx, cy))
         .unwrap();
     stdout.flush().unwrap();
+    // line_num = open_file(&mut buffer, line_num);
     'main: loop {
-        // write!(stdout, "{}", termion::clear::All).unwrap();
+        write!(stdout, "{}", termion::clear::All).unwrap();
 
         draw_lines(&mut stdout, &buffer.buffer);
         draw_info(&mut stdout,
@@ -70,13 +70,15 @@ fn main() {
                         start = buffer.get_line_size(cy as usize).1;
                         end = buffer.get_line_size(cy as usize).2;
                         // println!("{}",line_size);
-                        if buffer.get_line_size(cy as usize + 1).0 > line_size {
+                        if cx <= line_size as u16 + 1 {
+                            // println!("        bb    ");
+                            // println!("{}", buffer.get_line_size(cy as usize + 1).0);
+                            index = start + cx as usize - 3;
+                        } else {
+                            // println!("[oooo]");
                             cx = end as u16 + 3;
                             index = end;
-                        } else if buffer.get_line_size(cy as usize + 1).0 == line_size {
-                            index = end;
-                        } else {
-                            index = start + cx as usize - 3;
+                            //                            index = end;
                         }
                     }
                 }
@@ -86,13 +88,18 @@ fn main() {
                         line_size = buffer.get_line_size(cy as usize).0;
                         start = buffer.get_line_size(cy as usize).1;
                         end = buffer.get_line_size(cy as usize).2;
-                        if buffer.get_line_size(cy as usize - 1).0 > line_size {
-                            cx = (end - start) as u16 + 3;
-                            index = start + cx as usize - 3;
-                        } else {
-                            println!("Test");
-                            index = cx as usize - 3 + start as usize;
+
+                        if line_size == 1 {
+                            cx = 3;
+                            index = start;
                         }
+                        if cx <= line_size as u16 {
+                            println!("ortontriont");
+                            index = start + cx as usize - 3;
+
+                        }
+
+
                     }
                 }
                 Key::Left => {
@@ -106,13 +113,11 @@ fn main() {
                 }
                 Key::Right => {
                     // not working correctly
-                    if cx - 3 < buffer.get_line_size(cy as usize).0 as u16 &&
-                       buffer.buffer[index] != '\n' {
+                    if cx < buffer.get_line_size(cy as usize).0 as u16 + 2 {
+
                         cx += 1;
                         index += 1;
-                        line_size = buffer.get_line_size(cy as usize).0;
-                        start = buffer.get_line_size(cy as usize).1;
-                        end = buffer.get_line_size(cy as usize).2;
+
                     }
                 }
                 Key::Esc => break,
@@ -164,4 +169,19 @@ fn draw_lines(stdout: &mut RawTerminal<Stdout>, buffer: &Vec<char>) {
 
 fn draw_cursor(stdout: &mut RawTerminal<Stdout>, cx: u16, cy: u16) {
     write!(stdout, "{}", termion::cursor::Goto(cx, cy)).unwrap();
+}
+
+fn open_file(buffer: &mut GapBuffer, mut line_num: usize) -> usize {
+    use std::io::{BufRead, BufReader};
+    use std::fs::File;
+    use std::io::prelude::*;
+    let mut string = String::from("");
+    BufReader::new(File::open("/home/andre/test2").unwrap()).read_to_string(&mut string);
+    for (index, c) in string.chars().enumerate() {
+        if c == '\n' {
+            line_num += 1;
+        }
+        buffer.insert(index, c);
+    }
+    line_num
 }
