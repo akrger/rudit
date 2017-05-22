@@ -74,7 +74,7 @@ fn main() {
                             cx = end as u16 + 3;
                             index = end;
                         } else if buffer.get_line_size(cy as usize + 1).0 == line_size {
-                            index = end - 1;
+                            index = end;
                         } else {
                             index = start + cx as usize - 3;
                         }
@@ -90,6 +90,7 @@ fn main() {
                             cx = (end - start) as u16 + 3;
                             index = start + cx as usize - 3;
                         } else {
+                            println!("Test");
                             index = cx as usize - 3 + start as usize;
                         }
                     }

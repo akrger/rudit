@@ -43,12 +43,12 @@ impl GapBuffer {
         }
     }
     fn check_capacity(&mut self, index: usize) {
-        if self.gap_end == self.gap_start {
+        if 2 > self.gap_end - self.gap_start {
             self.extend_buffer(index);
         }
     }
     fn extend_buffer(&mut self, index: usize) {
-        let len = self.buffer.clone().len();
+        let len = self.buffer.clone().len() + 1;
         self.buffer.resize(len * 2, '\0');
         self.gap_start += len - index;
         self.gap_end = self.buffer.len();
