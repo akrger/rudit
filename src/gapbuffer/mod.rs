@@ -43,7 +43,7 @@ impl GapBuffer {
         }
     }
     fn check_capacity(&mut self, index: usize) {
-        if 2 > self.gap_end - self.gap_start {
+        if self.gap_end == self.gap_start {
             self.extend_buffer(index);
         }
     }
@@ -83,45 +83,52 @@ impl GapBuffer {
     }
 
     pub fn get_line_size(&self, line_num: usize) -> (usize, usize, usize) {
-        let mut line_start = 0;
-        let mut line_end = 0;
         let mut eol_count = 0;
         let mut eol_pos = 0;
-        let mut zero_count = 0;
-
+        let mut line_start = 0;
+        let mut line_end = 0;
         for i in 0..self.buffer.len() {
             if self.buffer[i] == '\n' {
                 eol_count += 1;
             }
             if eol_count == line_num - 1 {
+                if i > self.gap_end - self.gap_start {
+                    eol_pos = i - (self.gap_end - self.gap_start);
+                } else {
+                    eol_pos = i;
+                }
                 break;
             }
-            if self.buffer[i] != '\0' {
-
-                eol_pos += 1;
-            }
         }
-        if eol_pos == 0 {
+        if line_num == 1 {
             line_start = 0;
-            line_end = 0;
         } else {
-            line_start = eol_pos + 2;
-            line_end = line_start;
 
+            line_start = eol_pos;
+            line_end = eol_pos + 1;
         }
-        for i in line_start..self.buffer.len() {
-            if self.buffer[i] != '\0' {
+
+        for i in line_start + 1..self.buffer.len() {
+            if self.buffer[i] == '\n' {
+                if i > self.gap_end - self.gap_start {
+                    line_end = i - (self.gap_end - self.gap_start);
+                } else {
+                    line_end = i;
+                }
+                break;
+            } else if self.buffer[i] != '\0' {
                 line_end += 1;
             }
-            if self.buffer[i] == '\n' {
-                break;
-            }
+
         }
-        if eol_pos == 0 {
-            (self.buffer[line_start..line_end].len(), line_start, line_end)
+        if line_end > line_start {
+
+            (line_end - line_start, line_start, line_end)
         } else {
-            (self.buffer[line_start..line_end + 1].len(), line_start, line_end)
+
+            (line_start - line_end, line_start, line_end)
         }
+
     }
 }
 

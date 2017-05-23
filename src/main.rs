@@ -11,12 +11,19 @@ use termion::raw::RawTerminal;
 use rudit::gapbuffer::GapBuffer;
 
 fn main() {
-    let mut buffer = GapBuffer::new(50);
+    let mut buffer = GapBuffer::new(10);
     let mut stdout = stdout().into_raw_mode().unwrap();
     let mut index = 0;
     let mut cx: u16 = 3;
     let mut cy: u16 = 1;
     let mut line_num = 1;
+    let mut file_opened = false;
+    // line_num = open_file(&mut buffer, line_num);
+    // file_opened = true;
+    if !file_opened {
+        let len = buffer.buffer.len() - 1;
+        buffer.buffer[len] = '\n';
+    }
     let (mut line_size, mut start, mut end) = buffer.get_line_size(cy as usize);
     write!(stdout,
            "{}{}",
@@ -24,9 +31,8 @@ fn main() {
            termion::cursor::Goto(cx, cy))
         .unwrap();
     stdout.flush().unwrap();
-    // line_num = open_file(&mut buffer, line_num);
     'main: loop {
-        //   write!(stdout, "{}", termion::clear::All).unwrap();
+        // write!(stdout, "{}", termion::clear::All).unwrap();
 
         draw_lines(&mut stdout, &buffer.buffer);
         draw_info(&mut stdout,
@@ -69,24 +75,6 @@ fn main() {
                         line_size = buffer.get_line_size(cy as usize).0;
                         start = buffer.get_line_size(cy as usize).1;
                         end = buffer.get_line_size(cy as usize).2;
-
-                        if cx - 3 < line_size as u16 {
-                            index = cx as usize - 3 + start;
-                        } else {
-                            cx = end as u16 + 2;
-                            index = end - 1;
-                        }
-
-                        // if cx <= line_size as u16 + 1 {
-                        //     // println!("        bb    ");
-                        //     // println!("{}", buffer.get_line_size(cy as usize + 1).0);
-                        //     index = start + cx as usize - 3;
-                        // } else {
-                        //     // println!("[oooo]");
-                        //     cx = end as u16 + 3;
-                        //     index = end;
-                        //     //                            index = end;
-                        // }
                     }
                 }
                 Key::Down => {
@@ -113,6 +101,9 @@ fn main() {
 
                         cx += 1;
                         index += 1;
+                        line_size = buffer.get_line_size(cy as usize).0;
+                        start = buffer.get_line_size(cy as usize).1;
+                        end = buffer.get_line_size(cy as usize).2;
 
                     }
                 }
@@ -131,19 +122,20 @@ fn draw_info(stdout: &mut RawTerminal<Stdout>,
              line_num: usize,
              cx: u16,
              cy: u16,
-             line_size: usize,
+             line_count: usize,
              start: usize,
              end: usize,
              gs: usize,
              ge: usize) {
     write!(stdout,
-           "{} index {} line_num {} cx {} cy {} line_size {} start   {} end   {}      gs {} ge {}",
+           "{} index {} line_num {} cx {} cy {} line_count {} start   {} end   {}      gs {} ge \
+            {}",
            termion::cursor::Goto(0, termion::terminal_size().unwrap().1),
            index,
            line_num,
            cx - 2,
            cy,
-           line_size,
+           line_count,
            start,
            end,
            gs,
@@ -151,7 +143,9 @@ fn draw_info(stdout: &mut RawTerminal<Stdout>,
         .unwrap();
 }
 fn draw_lines(stdout: &mut RawTerminal<Stdout>, buffer: &Vec<char>) {
-    let s: String = buffer.iter().collect();
+    let mut s: String = buffer.iter().collect();
+    // don't draw eof line
+    s.pop();
     for (index, i) in s.split('\n').enumerate() {
         write!(stdout,
                "{}{}{}{}",
@@ -179,5 +173,6 @@ fn open_file(buffer: &mut GapBuffer, mut line_num: usize) -> usize {
         }
         buffer.insert(index, c);
     }
+
     line_num
 }
