@@ -23,13 +23,14 @@ fn main() {
     if !file_opened {
         let len = buffer.buffer.len() - 1;
         buffer.buffer[len] = '\n';
+        buffer.gap_end -= 1;
     }
     let (mut line_size, mut start, mut end) = buffer.get_line_size(cy as usize);
     write!(stdout,
            "{}{}",
            termion::clear::All,
            termion::cursor::Goto(cx, cy))
-        .unwrap();
+            .unwrap();
     stdout.flush().unwrap();
     'main: loop {
         // write!(stdout, "{}", termion::clear::All).unwrap();
@@ -46,6 +47,7 @@ fn main() {
                   buffer.gap_start,
                   buffer.gap_end);
         draw_cursor(&mut stdout, cx, cy);
+        println!("{:?}", buffer.buffer);
         stdout.flush().unwrap();
 
         for c in std::io::stdin().keys() {
@@ -74,6 +76,23 @@ fn main() {
                         cy -= 1;
                         line_size = buffer.get_line_size(cy as usize).0;
                         start = buffer.get_line_size(cy as usize).1;
+                        let mut line_size_to_prev_line = 0;
+                        if cy > 1 {
+                            line_size_to_prev_line = buffer.get_line_size(cy as usize - 1).0;
+                        }
+                        println!("           ls {} ps {} diff {}",
+                                 line_size,
+                                 line_size_to_prev_line,
+                                 line_size - line_size_to_prev_line);
+
+                        if line_size_to_prev_line > line_size - line_size_to_prev_line {
+                            index = line_size_to_prev_line;
+
+                        } else if line_size_to_prev_line < line_size - line_size_to_prev_line {
+                            index = line_size_to_prev_line;
+                        } else if index - line_size == line_size_to_prev_line {
+                            println!("                      nt     etuneu");
+                        }
                         end = buffer.get_line_size(cy as usize).2;
                     }
                 }
@@ -140,12 +159,14 @@ fn draw_info(stdout: &mut RawTerminal<Stdout>,
            end,
            gs,
            ge)
-        .unwrap();
+            .unwrap();
 }
 fn draw_lines(stdout: &mut RawTerminal<Stdout>, buffer: &Vec<char>) {
     let mut s: String = buffer.iter().collect();
     // don't draw eof line
-    s.pop();
+    if s.ends_with('\n') {
+        s.pop();
+    }
     for (index, i) in s.split('\n').enumerate() {
         write!(stdout,
                "{}{}{}{}",
@@ -153,7 +174,7 @@ fn draw_lines(stdout: &mut RawTerminal<Stdout>, buffer: &Vec<char>) {
                index + 1,
                Goto(3, (index + 1) as u16),
                i)
-            .unwrap();
+                .unwrap();
     }
 }
 
