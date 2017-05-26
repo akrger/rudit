@@ -62,8 +62,12 @@ impl GapBuffer {
     }
     pub fn delete(&mut self, index: usize) {
         self.place_gap(index);
-        self.buffer[self.gap_end] = '\0';
-        self.gap_end += 1;
+        if index > 0 {
+            self.buffer[index - 1] = '\0';
+        }
+        if self.gap_start > 0 {
+            self.gap_start -= 1;
+        }
     }
     pub fn new(size: usize) -> GapBuffer {
         GapBuffer {
@@ -83,47 +87,39 @@ impl GapBuffer {
     }
 
     pub fn get_line_size(&self, line_num: usize) -> (usize, usize, usize) {
-        // anzahl bis zum n-1-ten newline berechen
-        // dann bis zum n-ten newline berechen und die differenz bilden
-        // fertig
         let mut eol_count = 0;
-        let mut eol_pos = 0;
         let mut line_start = 0;
-        let mut line_end = 0;
 
-        if line_num == 1 {
-            for i in 0..self.buffer.len() {
-                if self.buffer[i] == '\n' {
-                    eol_pos += 1;
-                    break;
-                } else if self.buffer[i] != '\0' {
-                    eol_pos += 1;
-                }
+        // new buffer
+        let mut buffer = vec!['\0'; self.len()];
+        let mut index = 0;
+
+        // fill it with content != null-character
+        // inefficient, but I don't have a better solution yet
+        for i in 0..self.buffer.len() {
+            if self.buffer[i] != '\0' {
+                buffer[index] = self.buffer[i];
+                index += 1;
             }
-            (eol_pos, 0, eol_pos)
-        } else {
-            for i in 0..self.buffer.len() {
-                if self.buffer[i] == '\n' {
-                    eol_count += 1;
-                }
-                if eol_count == line_num - 1 {
-                    eol_pos = i;
-                    break;
-                }
-            }
-            line_start = eol_pos + 1;
-            line_end = eol_pos + 1;
-            for i in line_start..self.buffer.len() {
-                if self.buffer[i] != '\0' {
-                    line_end += 1;
-                }
-                if self.buffer[i] == '\n' {
-                    //line_end -= 1;
-                    break;
-                }
-            }
-            (line_end, line_start, line_end)
         }
+        for i in 0..buffer.len() {
+            if eol_count == line_num - 1 {
+                break;
+            }
+            if buffer[i] == '\n' {
+                eol_count += 1;
+            }
+            line_start += 1;
+        }
+        let mut line_end = line_start;
+        for i in line_start..buffer.len() {
+            if buffer[i] == '\n' {
+                line_end += 1;
+                break;
+            }
+            line_end += 1;
+        }
+        (line_end - line_start, line_start, line_end)
     }
 }
 

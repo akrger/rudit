@@ -18,22 +18,26 @@ fn main() {
     let mut cy: u16 = 1;
     let mut line_num = 1;
     let mut file_opened = false;
-    // line_num = open_file(&mut buffer, line_num);
-    // file_opened = true;
+    line_num = open_file(&mut buffer, line_num);
+    file_opened = true;
     if !file_opened {
         let len = buffer.buffer.len() - 1;
         buffer.buffer[len] = '\n';
         buffer.gap_end -= 1;
+    }
+    if file_opened {
+        buffer.gap_end = buffer.gap_end - buffer.gap_start;
+        buffer.gap_start = 0;
     }
     let (mut line_size, mut start, mut end) = buffer.get_line_size(cy as usize);
     write!(stdout,
            "{}{}",
            termion::clear::All,
            termion::cursor::Goto(cx, cy))
-            .unwrap();
+        .unwrap();
     stdout.flush().unwrap();
     'main: loop {
-        // write!(stdout, "{}", termion::clear::All).unwrap();
+        write!(stdout, "{}", termion::clear::All).unwrap();
 
         draw_lines(&mut stdout, &buffer.buffer);
         draw_info(&mut stdout,
@@ -47,7 +51,6 @@ fn main() {
                   buffer.gap_start,
                   buffer.gap_end);
         draw_cursor(&mut stdout, cx, cy);
-        println!("{:?}", buffer.buffer);
         stdout.flush().unwrap();
 
         for c in std::io::stdin().keys() {
@@ -71,29 +74,27 @@ fn main() {
                     end = buffer.get_line_size(cy as usize).2;
 
                 }
+                Key::Backspace => {
+                    buffer.delete(index);
+                    if index > 0 {
+                        cx -= 1;
+                        index -= 1;
+                    }
+                    stdout.flush();
+                }
                 Key::Up => {
                     if cy > 1 {
                         cy -= 1;
                         line_size = buffer.get_line_size(cy as usize).0;
                         start = buffer.get_line_size(cy as usize).1;
-                        let mut line_size_to_prev_line = 0;
-                        if cy > 1 {
-                            line_size_to_prev_line = buffer.get_line_size(cy as usize - 1).0;
-                        }
-                        println!("           ls {} ps {} diff {}",
-                                 line_size,
-                                 line_size_to_prev_line,
-                                 line_size - line_size_to_prev_line);
-
-                        if line_size_to_prev_line > line_size - line_size_to_prev_line {
-                            index = line_size_to_prev_line;
-
-                        } else if line_size_to_prev_line < line_size - line_size_to_prev_line {
-                            index = line_size_to_prev_line;
-                        } else if index - line_size == line_size_to_prev_line {
-                            println!("                      nt     etuneu");
-                        }
                         end = buffer.get_line_size(cy as usize).2;
+                        if buffer.get_line_size(cy as usize + 1).0 < line_size ||
+                           buffer.get_line_size(cy as usize + 1).0 == line_size {
+                            index = start + cx as usize - 3;
+                        } else {
+                            index = end - 1;
+                            cx = line_size as u16 + 2;
+                        }
                     }
                 }
                 Key::Down => {
@@ -102,7 +103,13 @@ fn main() {
                         line_size = buffer.get_line_size(cy as usize).0;
                         start = buffer.get_line_size(cy as usize).1;
                         end = buffer.get_line_size(cy as usize).2;
-
+                        if buffer.get_line_size(cy as usize - 1).0 < line_size ||
+                           buffer.get_line_size(cy as usize - 1).0 == line_size {
+                            index = cx as usize - 3 + start;
+                        } else {
+                            index = end - 1;
+                            cx = line_size as u16 + 2;
+                        }
                     }
                 }
                 Key::Left => {
@@ -159,7 +166,7 @@ fn draw_info(stdout: &mut RawTerminal<Stdout>,
            end,
            gs,
            ge)
-            .unwrap();
+        .unwrap();
 }
 fn draw_lines(stdout: &mut RawTerminal<Stdout>, buffer: &Vec<char>) {
     let mut s: String = buffer.iter().collect();
@@ -174,7 +181,7 @@ fn draw_lines(stdout: &mut RawTerminal<Stdout>, buffer: &Vec<char>) {
                index + 1,
                Goto(3, (index + 1) as u16),
                i)
-                .unwrap();
+            .unwrap();
     }
 }
 
