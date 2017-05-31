@@ -8,7 +8,7 @@ use termion::event::Key;
 use termion::input::TermRead;
 use termion::cursor::Goto;
 use termion::raw::RawTerminal;
-use rudit::gapbuffer::GapBuffer;
+use rudit::textbuffer::TextBuffer;
 
 fn main() {
     #![allow(warnings)]
@@ -25,16 +25,15 @@ fn main() {
         size = file_char_count();
     }
 
-    let mut buffer: GapBuffer = GapBuffer::with_capacity(8);
+    let mut buffer: TextBuffer = TextBuffer::new();
 
     if !file_opened {
-        let len = buffer.buf.len() - 1;
-        buffer.buf[len] = '\n';
-        buffer.end -= 1;
+        //let len = buffer.buf.len() - 1;
+        //      buffer.buf[len] = '\n';
+        //        buffer.end -= 1;
     }
     if file_opened {
         line_num = open_file(&mut buffer, line_num);
-        buffer.place_gap(index);
     }
     // assert_eq!(buffer.buffer.len(), 3);
     let (mut line_size, mut start, mut end) = (0, 0, 0);
@@ -42,35 +41,28 @@ fn main() {
            "{}{}",
            termion::clear::All,
            termion::cursor::Goto(cx, cy))
-        .unwrap();
+            .unwrap();
     stdout.flush().unwrap();
     'main: loop {
-        write!(stdout, "{}", termion::clear::All).unwrap();
-        draw_lines(&mut stdout, &buffer.buf);
-        draw_info(&mut stdout,
-                  index,
-                  line_num,
-                  cx,
-                  cy,
-                  line_size,
-                  start,
-                  end,
-                  buffer.start,
-                  buffer.end);
+        //write!(stdout, "{}", termion::clear::All).unwrap();
+        //println!("{:?}", buffer.buf);
+        draw_lines(&mut stdout, buffer.buf.clone());
+        draw_info(&mut stdout, index, line_num, cx, cy, line_size, start, end);
         draw_cursor(&mut stdout, cx, cy);
         stdout.flush().unwrap();
 
         for c in std::io::stdin().keys() {
             match c.unwrap() {
                 Key::Char('\n') => {
-                    buffer.insert(index, '\n');
+                    buffer.buf[cy as usize - 1].insert(cx as usize - 3, '\n');
+                    buffer.buf.insert(cy as usize, vec![]);
                     cx = 3;
                     cy += 1;
-                    index += 1;
+                    index = 0;
                     line_num += 1;
                 }
                 Key::Char(c) => {
-                    buffer.insert(index, c);
+                    buffer.buf[cy as usize - 1].insert(index, c);
                     index += 1;
                     cx += 1;
                 }
@@ -83,13 +75,20 @@ fn main() {
                 }
                 Key::Up => {
                     if cy > 1 {
+                        if buffer.line_size(cy as usize - 1) > buffer.line_size(cy as usize - 2) {
+                            cx = buffer.line_size(cy as usize - 2) as u16 + 3;
+                            index = cx as usize - 3;
+                        }
                         cy -= 1;
                     }
                 }
                 Key::Down => {
-                    if cy < line_num as u16 - 1 {
+                    if cy < line_num as u16 {
+                        if buffer.line_size(cy as usize) < buffer.line_size(cy as usize - 1) {
+                            cx = buffer.line_size(cy as usize) as u16 + 3;
+                            index = cx as usize - 3;
+                        }
                         cy += 1;
-                        index = 6;
                     }
                 }
                 Key::Left => {
@@ -99,7 +98,11 @@ fn main() {
                     }
                 }
                 Key::Right => {
-                    if cx - 2 < buffer.count() as u16 {
+                    //   if cx - 2 < buffer.count() as u16 {
+                    //     cx += 1;
+                    //    index += 1;
+                    // }
+                    if cx - 3 < buffer.line_size(cy as usize - 1) as u16 {
                         cx += 1;
                         index += 1;
                     }
@@ -121,12 +124,9 @@ fn draw_info(stdout: &mut RawTerminal<Stdout>,
              cy: u16,
              line_count: usize,
              start: usize,
-             end: usize,
-             gs: usize,
-             ge: usize) {
+             end: usize) {
     write!(stdout,
-           "{} index {} line_num {} cx {} cy {} line_count {} start   {} end   {}      gs {} ge \
-            {}",
+           "{} index {} line_num {} cx {} cy {} line_count {} start   {} end   {}",
            termion::cursor::Goto(0, termion::terminal_size().unwrap().1),
            index,
            line_num,
@@ -135,16 +135,20 @@ fn draw_info(stdout: &mut RawTerminal<Stdout>,
            line_count,
            start,
            end,
-           gs,
-           ge)
-        .unwrap();
+           )
+            .unwrap();
 }
-fn draw_lines(stdout: &mut RawTerminal<Stdout>, buffer: &Vec<char>) {
-    let mut s: String = buffer.iter().collect();
-    // don't draw eof line
-    if s.ends_with('\n') {
-        s.pop();
+fn draw_lines(stdout: &mut RawTerminal<Stdout>, buffer: Vec<Vec<char>>) {
+    let mut s: String = String::from("");
+    for i in buffer {
+        for j in i {
+            s.push(j);
+        }
     }
+    // don't draw eof line
+    // if s.ends_with('\n') {
+    //     s.pop();
+    // }
     for (index, i) in s.split('\n').enumerate() {
         write!(stdout,
                "{}{}{}{}",
@@ -152,7 +156,7 @@ fn draw_lines(stdout: &mut RawTerminal<Stdout>, buffer: &Vec<char>) {
                index + 1,
                Goto(3, (index + 1) as u16),
                i)
-            .unwrap();
+                .unwrap();
     }
 }
 
@@ -167,7 +171,7 @@ fn file_char_count() -> usize {
     BufReader::new(File::open("/home/andre/test2").unwrap()).read_to_string(&mut string).unwrap();
     string.len()
 }
-fn open_file(buffer: &mut GapBuffer, mut line_num: usize) -> usize {
+fn open_file(buffer: &mut TextBuffer, mut line_num: usize) -> usize {
     use std::io::BufReader;
     use std::fs::File;
     use std::io::prelude::*;
@@ -177,7 +181,7 @@ fn open_file(buffer: &mut GapBuffer, mut line_num: usize) -> usize {
         if c == '\n' {
             line_num += 1;
         }
-        buffer.insert(index, c);
+        // buffer.insert(index, c);
     }
 
     line_num

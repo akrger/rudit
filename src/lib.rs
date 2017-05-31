@@ -1,1 +1,1 @@
-pub mod gapbuffer;
+pub mod textbuffer;
