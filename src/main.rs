@@ -75,8 +75,8 @@ fn main() {
                 }
                 Key::Up => {
                     if cy > 1 {
-                        if cx + buffer.line_size(cy as usize - 2) as u16 <=
-                           buffer.line_size(cy as usize - 1) as u16 {
+                        if buffer.line_size(cy as usize - 2) == buffer.line_size(cy as usize - 1) ||
+                           cx - 3 <= buffer.line_size(cy as usize - 2) as u16 {
                         } else if buffer.line_size(cy as usize - 1) >
                                   buffer.line_size(cy as usize - 2) {
                             cx = buffer.line_size(cy as usize - 2) as u16 + 3;
@@ -87,7 +87,8 @@ fn main() {
                 }
                 Key::Down => {
                     if cy < line_num as u16 {
-                        if cx == buffer.line_size(cy as usize - 1) as u16 {
+                        if buffer.line_size(cy as usize) == buffer.line_size(cy as usize - 1) ||
+                           cx - 3 <= buffer.line_size(cy as usize) as u16 {
                         } else if buffer.line_size(cy as usize) <
                                   buffer.line_size(cy as usize - 1) {
                             cx = buffer.line_size(cy as usize) as u16 + 3;
