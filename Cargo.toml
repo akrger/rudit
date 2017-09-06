@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["André Krüger <zeldamer@t-online.de>"]
 
 [dependencies]
+gtk = "^0"
+gdk="^0"
+glib="^0"
 ncurses = "5.85.0"
 pancurses = "0.8"
 termion = "*"
+gapbuffer = { path = "../gapbuffer" }
