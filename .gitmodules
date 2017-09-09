@@ -1,0 +1,3 @@
+[submodule "gapbuffer"]
+	path = gapbuffer
+	url = git@github.com:akrger/gapbuffer

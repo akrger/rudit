@@ -11,14 +11,14 @@ fn main() {
     let mut stdout = stdout().into_raw_mode().unwrap();
     let mut cx: u16 = 3;
     let mut cy: u16 = 1;
-    let mut buffer = GapBuffer::new(4);
+    let mut buffer = GapBuffer::new(5);
     write!(stdout, "{}{}", termion::clear::All, termion::cursor::Goto(cx, cy)).unwrap();
     stdout.flush().unwrap();
     'main: loop {
         write!(stdout, "{}", termion::clear::All).unwrap();
         let line_len = get_line_len(&buffer);
         draw_buffer(&mut stdout, &buffer.buffer);
-        draw_info(&mut stdout, line_len);
+        draw_info(&mut stdout, line_len, buffer.point as u16);
         update_cursor(&mut stdout, cx, cy);
         stdout.flush().unwrap();
         for c in std::io::stdin().keys() {
@@ -102,6 +102,6 @@ fn get_line_len(buffer: &GapBuffer) -> u16 {
     }
     line_len
 }
-fn draw_info(stdout: &mut RawTerminal<Stdout>, line_len: u16) {
-    write!(stdout, "{}{}", Goto(3, 20), line_len).unwrap();
+fn draw_info(stdout: &mut RawTerminal<Stdout>, line_len: u16, point: u16) {
+    write!(stdout, "{}{} --- {}", Goto(3, 20), line_len, point).unwrap();
 }
